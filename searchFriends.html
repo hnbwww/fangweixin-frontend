@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="css/mui.css" rel="stylesheet" />
+		<link href="css/header.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav title">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left" style="color: white;"></a>
+			<a class="mui-icon mui-icon-right-nav mui-pull-right" style="color: white;font-size: 16px;line-height: 25px;" id="searchFriends" style="">完成</a>
+			<h1 class="mui-title title-color">添加好友</h1>
+		</header>
+		
+		<div class="mui-content">
+			<div class="mui-input-row">
+				<input type="text" class="mui-input-speech mui-input-clear" placeholder="熊信号/手机号" id="searchUesrname">
+			</div>
+			
+		</div>
+		
+		<script src="js/mui.js"></script>
+		<script src="js/app.js"></script>
+		<script type="text/javascript">
+			mui.init();
+			mui.plusReady(function () {
+				var searchFriends = document.getElementById("searchFriends");
+				var searchUesrname = document.getElementById("searchUesrname");
+				// 获取焦点
+				searchUesrname.focus();
+				searchFriends.addEventListener("tap", function() {
+					var userInfoStr = app.getGlobalUserInfo();
+					var userInfo = JSON.parse(userInfoStr);
+					// 失去焦点
+					searchUesrname.blur();
+					
+					var sName = searchUesrname.value;
+					if (!app.isNotNull(sName)) {
+						app.showToast("请输入要搜索的用户号", "error");
+						return false;
+					}
+					
+					// 向后台发送请求
+					plus.nativeUI.showWaiting("请稍后");
+					
+					console.log(userInfo.id);
+					mui.ajax(app.serverUrl + '/u/searchUser', {
+						data:{
+							myUserId: userInfo.id,
+							searchUsername: searchUesrname.value
+						},
+						dataType:'json',//服务器返回json格式数据
+						type:'post',//HTTP请求类型
+						timeout:10000,//超时时间设置为10秒；
+						// headers:{'Content-Type':'application/json'},	              
+						success:function(data) {
+							//服务器返回响应，根据响应结果，分析是否登录成功；
+							console.log(JSON.stringify(data));
+							plus.nativeUI.closeWaiting();
+							if (data.code == 200) {
+								// 跳转到搜索结果页面
+								mui.openWindow({
+									url:"searchFriendsResult.html",
+									id:"searchFriendsResult.html",
+									extras:{
+										searchUser:data.data
+									},
+									createNew:true
+								});
+							} else {
+								app.showToast(data.msg, "error");
+							}
+						}
+					});
+				});
+			});
+		</script>
+	</body>
+
+</html>

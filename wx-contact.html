@@ -1,0 +1,251 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="css/mui.css" rel="stylesheet" />
+		<link href="css/mui.indexedlist.css" rel="stylesheet" />
+		<style>
+			html,
+			body {
+				height: 100%;
+				overflow: hidden;
+			}
+			.mui-bar {
+				-webkit-box-shadow: none;
+				box-shadow: none;
+			}
+			.unread-msg {
+				margin-right: 40px;
+				color: white;
+				border-radius: 50%;
+				background: #c9394a;
+				width: 24px;
+				height: 24px;
+				text-align: center;
+				font-weight: bold;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<div id='list' class="mui-indexed-list">
+				<div class="mui-indexed-list-search mui-input-row mui-search">
+					<input type="search" class="mui-input-clear mui-indexed-list-search-input" placeholder="搜索好友">
+				</div>
+				<div class="mui-indexed-list-bar" id="navi-right">
+					
+				</div>
+				<div class="mui-indexed-list-alert"></div>
+				<div class="mui-indexed-list-inner">
+					<div class="mui-indexed-list-empty-alert">没有数据</div>
+					<br />
+					<ul class="mui-table-view">
+						<li class="mui-table-view-cell mui-media" id="toFriendRequest">
+							<a href="javascript:;">
+								<img class="mui-media-object mui-pull-left" src="image/addfriends.png"
+									style="max-width: 24px;max-height: 24px;">
+									<div class="mui-ellipsis mui-pull-right" id="unread-msg-id"></div>
+								<p class="mui-ellipsis" style="line-height: 24px;color: black;font-size: 16px;">
+									<span style="margin-left: 10px;">新朋友</span>
+								</p>
+							</a>
+						</li>
+					</ul>
+					<br />
+					<ul class="mui-table-view" id="friendsListId">
+						
+					</ul>
+				</div>
+			</div>
+		</div>
+		
+		<script src="js/mui.js"></script>
+		<script src="js/app.js"></script>
+		<script src="js/mui.indexedlist.js"></script>
+		<script src="js/nickname.js"></script>
+		<script type="text/javascript">
+			mui.init();
+			mui.plusReady(function () {
+				showList();
+				
+				// 获取好友列表
+				getFriendsListAjax();
+				
+				// 刷新好友列表的时机:1.login;2.同意了好友请求;3.定时发送心跳包时
+				window.addEventListener("refreshFriendsList", function() {
+					getFriendsListAjax();
+					getFriendsRequestCountAjax();
+				});
+				
+				var cWebview = plus.webview.currentWebview();
+				cWebview.addEventListener("show", function() {
+					getFriendsRequestCountAjax();
+				});
+				
+				var toFriendRequest = document.getElementById("toFriendRequest");
+				toFriendRequest.addEventListener("tap", function() {
+					mui.openWindow("friendRequest.html", "friendRequest.html");
+				});
+			});
+			
+			// 显示通讯录
+			function showList() {
+				var list = document.getElementById('list');
+				// calc hieght
+				list.style.height = document.body.offsetHeight + 'px';
+				// create
+				window.indexedList = new mui.IndexedList(list);
+			};
+			
+			// 获取好友列表
+			function getFriendsListAjax() {
+				var userInfo = app.getGlobalUserInfoJson();
+				mui.ajax(app.serverUrl + "/u/getMyFriendsList", {
+					data:{
+						userId: userInfo.id
+					},
+					dataType:'json',//服务器返回json格式数据
+					type:'post',//HTTP请求类型
+					timeout:10000,//超时时间设置为10秒；
+					// headers:{'Content-Type':'application/json'},	              
+					success:function(data){
+						console.log(JSON.stringify(data));
+						//服务器返回响应
+						plus.nativeUI.closeWaiting();
+						
+						if (data.code == 200) {
+							// 为减少列表请求次数,将数据加入本地缓存
+							app.setFriendsList(data.data);
+							// 拼接html
+							cancatFriendsListHtml();
+						} else {
+							app.showToast(data.msg, "error");
+						}
+					}
+				});
+			};
+			// 获取好友请求总数
+			function getFriendsRequestCountAjax() {
+				var userInfo = app.getGlobalUserInfoJson();
+				mui.ajax(app.serverUrl + "/u/getFriendRequestCount?myUserId=" + userInfo.id, {
+					dataType:'json',//服务器返回json格式数据
+					type:'get',//HTTP请求类型
+					timeout:10000,//超时时间设置为10秒；
+					// headers:{'Content-Type':'application/json'},	              
+					success:function(data){
+						
+						if (data.code == 200) {
+							var count = data.data;
+							var unreadMsgId = document.getElementById("unread-msg-id");
+							// 显示好友数量的处理
+							if (count != undefined && count != 0) {
+								unreadMsgId.classList.remove("unread-msg");
+								unreadMsgId.classList.add("unread-msg");
+								unreadMsgId.innerHTML = count;
+							} else {
+								unreadMsgId.classList.remove("unread-msg");
+								unreadMsgId.innerHTML = "";
+							}
+						} else {
+							app.showToast(data.msg, "error");
+						}
+					}
+				});
+			};
+			
+			// 右侧导航数组
+			var wordsArray = [
+				"A", "B", "C", "D", "E", "F", "G", "H", "I",
+				"J", "K", "L", "M", "N", "O", "P", "Q", "R",
+				"S", "T", "U", "V", "W", "X", "Y", "Z", "#"
+			];
+			// 好友列表数组
+			var friendsArray = [
+				[], [], [], [], [], [], [], [], [],
+				[], [], [], [], [], [], [], [], [],
+				[], [], [], [], [], [], [], [], []
+			];
+			
+			// // 清空数组,防止叠加
+			function clearFriendsArray() {
+				friendsArray = [
+					[], [], [], [], [], [], [], [], [],
+					[], [], [], [], [], [], [], [], [],
+					[], [], [], [], [], [], [], [], []
+				];
+			};
+			
+			// 拼接好友列表的html
+			function cancatFriendsListHtml() {
+				// 先将好友列表的数据存入26字母的数组中
+				var friendsList = app.getFriendsList();
+				for (var i = 0, len = friendsList.length; i < len; i++) {
+					var friend = friendsList[i];
+					var pinyin = words.convertPinyin(friend.nickname);
+					var capital = pinyin.substr(0, 1).toUpperCase();
+					var index = getIndexFromWordsArray(capital);
+					// 将好友信息保存到数组中
+					friendsArray[index].push(friend);
+				}
+				
+				// 拼接
+				var innerHtmlStr = "";
+				var naviInnerHtmlStr = "";
+				for (var i = 0, len = friendsArray.length; i < len; i++) {
+					var unitArray = friendsArray[i];
+					var unitLen = unitArray.length;
+					// 每个标签下的好友数组,比如A标签下的好友列表数组
+					if (unitLen > 0) {
+						innerHtmlStr += '<li data-group="' + wordsArray[i] + '" class="mui-table-view-divider mui-indexed-list-group">' + wordsArray[i] + '</li>';
+						naviInnerHtmlStr += '<a>' + wordsArray[i] + '</a>';
+						for (var j = 0; j < unitLen; j++) {
+							var friend = unitArray[j];
+							var faceImg = app.getUserFaceImg(friend.faceImg);
+							innerHtmlStr += '<li friendId="' + friend.id + '" friendUsername="' + friend.username + '" friendFaceImg="' + friend.faceImg + '" class="toChatPage mui-table-view-divider mui-media" style="padding: 8px 10px;">' +
+								'<img class="mui-media-object mui-pull-left" src="' + faceImg + '" style="max-width: 35px;max-height: 35px;">' +
+								'<div class="mui-media-body" style="line-height: 35px;color: #000000;font-size: 16px;">' + friend.username + '</div>' +
+								'</li>';
+						}
+					}
+				}
+				
+				// 好友添加点击事件
+				mui("#friendsListId").on("tap", ".toChatPage", function() {
+					var friendId = this.getAttribute("friendId");
+					var friendUsername = this.getAttribute("friendUsername");
+					var friendFaceImg = this.getAttribute("friendFaceImg");
+					mui.openWindow({
+						url: "chatting.html",
+						id: "chatting-" + friendId,
+						extras: {
+							friendId: friendId,
+							friendUsername: friendUsername,
+							friendFaceImg: friendFaceImg
+						}
+					});
+				});
+				
+				var friendsListId = document.getElementById("friendsListId");
+				friendsListId.innerHTML = innerHtmlStr;
+				var naviRight = document.getElementById("navi-right");
+				naviRight.innerHTML = naviInnerHtmlStr;
+				clearFriendsArray();
+			};
+			
+			// 获取首字母在26字母表中的index
+			function getIndexFromWordsArray(capital) {
+				for (var j = 0, num = wordsArray.length; j < num; j++) {
+					if (capital === wordsArray[j]) {
+						return j;
+					}
+				}
+				return num - 1;
+			};
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="css/mui.css" rel="stylesheet" />
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+	</head>
+
+	<body>
+		<div class="mui-content">
+			
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell mui-media">
+					<a href="javascript:;" id="toMyFace">
+						<span class="mui-pull-right mui-icon mui-icon-arrowright" style="color: lightgray;line-height: 42px;"></span>
+						<img class="mui-media-object mui-pull-right" src="image/face-default-cat.png" id="user_img">
+						<div class="mui-media-body" style="line-height: 42px;">
+							头像
+						</div>
+					</a>
+				</li>
+				<li class="mui-table-view-cell mui-media">
+					<a href="javascript:;" id="toMyNickname">
+						<span class="mui-pull-right mui-icon mui-icon-arrowright" style="color: lightgray;"></span>
+						<span class="mui-pull-right" style="color: gray;font-size: 14px;margin-top: 2px;" id="user_nickname"></span>
+						<div class="mui-media-body">
+							昵称
+						</div>
+					</a>
+				</li>
+				<li class="mui-table-view-cell mui-media">
+					<a href="javascript:;">
+						<span class="mui-pull-right" style="color: gray;font-size: 14px;" id="user_username"></span>
+						<div class="mui-media-body">
+							熊信号
+						</div>
+					</a>
+				</li>
+				<li class="mui-table-view-cell mui-media">
+					<a href="javascript:;" id="toQrCode">
+						<span class="mui-pull-right mui-icon mui-icon-arrowright" style="color: lightgray;"></span>
+						<img class="mui-media-object mui-pull-right" src="image/qrcode.png" style="width: 20px;height: 20px;margin-top: 2px;">
+						<div class="mui-media-body">
+							我的二维码
+						</div>
+					</a>
+				</li>
+			</ul>
+			<br />
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell mui-media">
+					<a href="javascript:;" id="logout">
+						<div class="mui-media-body" style="text-align: center;">
+							退出登录
+						</div>
+					</a>
+				</li>
+			</ul>
+		</div>
+		<script type="text/javascript" src="js/mui.js"></script>
+		<script type="text/javascript" src="js/app.js"></script>
+		<script type="text/javascript">
+			mui.init();
+			mui.plusReady(function () {
+				// 加载用户信息
+				refreshUserInfo();
+				
+				window.addEventListener("refresh", function() {
+					refreshUserInfo();
+				});
+				
+				// 点击进入我的头像界面
+				var toMyFace = document.getElementById("toMyFace");
+				toMyFace.addEventListener("tap", function() {
+					// 刷新myFace页面用户信息
+					var myFaceWebview = plus.webview.getWebviewById("myFace.html");
+					mui.fire(myFaceWebview, "refresh");
+					mui.openWindow("myFace.html", "myFace.html");
+				});
+				
+				// 点击进入修改昵称界面
+				var toMyNickname = document.getElementById("toMyNickname");
+				toMyNickname.addEventListener("tap", function() {
+					mui.openWindow("myNickname.html", "myNickname.html");
+				});
+				
+				// 点击进入二维码界面
+				var toQrCode = document.getElementById("toQrCode");
+				toQrCode.addEventListener("tap", function() {
+					mui.openWindow("myQRCode.html", "myQRCode.html");
+				});
+				
+				// 点击退出登录
+				var logout = document.getElementById("logout");
+				logout.addEventListener("tap", function() {
+					// 清空用户信息
+					app.removeGlobalUserInfo();
+					// 跳转到登录页面
+					mui.openWindow("login.html", "login.html");
+				});
+			});
+			
+			var refreshUserInfo = function() {
+				var userInfoStr = app.getGlobalUserInfo();
+				var userInfo = JSON.parse(userInfoStr);
+				
+				if (userInfo != null && userInfo != undefined) {
+					var username = userInfo.username;
+					var nickname = userInfo.nickname;
+					
+					$("#user_username").html(username);
+					$("#user_nickname").html(nickname);
+					// 用户头像
+					var faceImg = app.getUserFaceImg(userInfo.faceImg);
+					$("#user_img").attr("src", faceImg);
+				};
+			}
+		</script>
+	</body>
+
+</html>

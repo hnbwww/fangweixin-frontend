@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <title></title>
+    <script src="js/mui.min.js"></script>
+    <link href="css/mui.min.css" rel="stylesheet"/>
+	<link href="css/header.css" rel="stylesheet"/>
+	<link href="iconFont/iconfont.css" rel="stylesheet"/>
+    <script type="text/javascript" charset="utf-8">
+      	mui.init();
+		
+		mui.plusReady(function() {
+			// 设置导航栏颜色和样式
+			plus.navigator.setStatusBarStyle("light");
+			plus.navigator.setStatusBarBackground("#c9394a");
+			
+			buildPage();
+			
+			// 返回按钮失效
+			mui.back = function () {
+				return false;
+			};
+			
+			// 对网络进行监听
+			networkStatusChange();
+			
+		});
+		
+		// 网络状态改变触发的函数
+		function networkStatusChange() {
+			document.addEventListener("netchange", function() {
+				var connectionStatus = plus.networkinfo.getCurrentType();
+				var xiongxin_title = document.getElementById("xiongxin_title");
+				// 判断网络连接
+				if (connectionStatus === 0 || connectionStatus === 1) {
+					// 网络连接异常
+					xiongxin_title.innerHTML = "<b>xChat(未连接)</b>";
+				} else {
+					xiongxin_title.innerHTML = "<b>xChat</b>";
+				}
+			});
+		};
+		
+		// 页面创建和拼接
+		var buildPage = function() {
+			// 定义一个页面数组
+			var pageArray = [
+				{
+					id: "wx-msg.html",
+					url: "wx-msg.html",
+				},
+				{
+					id: "wx-contact.html",
+					url: "wx-contact.html",
+				},
+				{
+					id: "wx-discover.html",
+					url: "wx-discover.html",
+				},
+				{
+					id: "wx-me.html",
+					url: "wx-me.html",
+				}
+			];
+			// 将webview注入到index页面中
+			var pageStyle = {
+				top: "44px",
+				bottom: "50px"
+			}
+			var indexPage = plus.webview.currentWebview();
+			for (var i = 0; i < pageArray.length; i++) {
+				var newPage = plus.webview.create(pageArray[i].url, pageArray[i].id, pageStyle);
+				// 隐藏页面
+				newPage.hide();
+				indexPage.append(newPage);
+			}
+			plus.webview.show(pageArray[0].id);
+			
+			// 绑定底部点击事件
+			mui(".mui-bar-tab").on("tap", "a", function() {
+				var pageIndex = this.getAttribute("tabindex");
+				plus.webview.show(pageArray[pageIndex].id, "fade-in", 200);
+				// 隐藏其他页面
+				for (var i = 0; i < pageArray.length; i++) {
+					if (i != pageIndex) {
+						plus.webview.hide(pageArray[i].id, "fade-out", 200);
+					}
+				}
+			});
+		
+			setTimeout("initData()", 500);
+		};
+		
+		function initData() {
+			var friendRequest = plus.webview.getWebviewById("friendRequest.html");
+			mui.fire(friendRequest, "refreshFriendRequestList");
+			var wxMsg = plus.webview.getWebviewById("wx-msg.html");
+			mui.fire(wxMsg, "refreshMsgList");
+			var wxMe = plus.webview.getWebviewById("wx-me.html");
+			mui.fire(wxMe, "refresh");
+			
+		};
+		
+		
+    </script>
+</head>
+<body>
+	<header class="mui-bar mui-bar-nav title">
+		<h1 class="mui-title title-color" id="xiongxin_title"><b>xChat</b></h1>
+	</header>
+	<nav class="mui-bar mui-bar-tab">
+		<a class="mui-tab-item mui-active" tabindex="0">
+			<span class="mui-icon iconfont icon-weixinxiaoxixianxing"></span>
+			<span class="mui-tab-label">消息</span>
+		</a>
+		<a class="mui-tab-item" tabindex="1">
+			<span class="mui-icon iconfont icon-weixintongxunlu"></span>
+			<span class="mui-tab-label">通讯录</span>
+		</a>
+		<a class="mui-tab-item" tabindex="2">
+			<span class="mui-icon iconfont icon-zhinanzhenfaxiandaohangdizhiweizhi"></span>
+			<span class="mui-tab-label">发现</span>
+		</a>
+		<a class="mui-tab-item" tabindex="3">
+			<span class="mui-icon iconfont icon-wode"></span>
+			<span class="mui-tab-label">我</span>
+		</a>
+	</nav>
+</body>
+</html>

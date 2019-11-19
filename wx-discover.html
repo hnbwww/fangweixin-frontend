@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="css/mui.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell mui-media">
+					<a href="javascript:;">
+						<img class="mui-media-object mui-pull-left" src="image/friends.png"
+							style="max-width: 24px;max-height: 24px;">
+						<p class="mui-ellipsis" style="line-height: 24px;color: black;font-size: 16px;">
+							<span style="margin-left: 10px;">朋友圈</span>
+						</p>
+					</a>
+				</li>
+			</ul>
+			<br />
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell mui-media">
+					<a href="javascript:;" id="toAddFriends">
+						<img class="mui-media-object mui-pull-left" src="image/addfriends.png"
+							style="max-width: 24px;max-height: 24px;">
+						<p class="mui-ellipsis" style="line-height: 24px;color: black;font-size: 16px;">
+							<span style="margin-left: 10px;">添加好友</span>
+						</p>
+					</a>
+				</li>
+				<li class="mui-table-view-cell mui-media">
+					<a href="javascript:;" id="toSacn">
+						<img class="mui-media-object mui-pull-left" src="image/scanscan.png"
+							style="max-width: 24px;max-height: 24px;">
+						<p class="mui-ellipsis" style="line-height: 24px;color: black;font-size: 16px;">
+							<span style="margin-left: 10px;">扫一扫</span>
+						</p>
+					</a>
+				</li>
+			</ul>
+		</div>
+		
+		<script src="js/mui.js"></script>
+		<script type="text/javascript">
+			mui.init();
+			mui.plusReady(function () {
+				// 跳转到添加好友界面
+			    var toAddFriends = document.getElementById("toAddFriends"); 
+			    toAddFriends.addEventListener("tap", function() {
+				   mui.openWindow("searchFriends.html", "searchFriends.html"); 
+			    });
+			   
+			    // 跳转到扫一扫界面
+			    var toSacn = document.getElementById("toSacn"); 
+			    toSacn.addEventListener("tap", function() {
+				   mui.openWindow("scanMe.html", "scanMe.html"); 
+			    });
+			});
+		</script>
+	</body>
+
+</html>
